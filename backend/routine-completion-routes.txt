@@ -1,0 +1,122 @@
+// Add these routes to routines.js after the delete route
+
+// Mark task as complete
+router.put('/:id/tasks/:taskIndex/complete', authenticateToken, async (req, res) => {
+  try {
+    const { id, taskIndex } = req.params;
+    const { completed } = req.body;
+    
+    const routine = await Routine.findOne({ _id: id, userId: req.userId });
+    
+    if (!routine) {
+      return res.status(404).json({ error: 'Routine not found' });
+    }
+    
+    if (!routine.tasks || taskIndex >= routine.tasks.length) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    
+    routine.tasks[taskIndex].completed = completed;
+    routine.tasks[taskIndex].completedAt = completed ? new Date() : null;
+    routine.updatedAt = Date.now();
+    
+    // Update completion history for today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const completedCount = routine.tasks.filter(t => t.completed).length;
+    const totalCount = routine.tasks.length;
+    
+    const historyIndex = routine.completionHistory.findIndex(h => {
+      const hDate = new Date(h.date);
+      hDate.setHours(0, 0, 0, 0);
+      return hDate.getTime() === today.getTime();
+    });
+    
+    if (historyIndex >= 0) {
+      routine.completionHistory[historyIndex].completedTasks = completedCount;
+      routine.completionHistory[historyIndex].totalTasks = totalCount;
+    } else {
+      routine.completionHistory.push({
+        date: today,
+        completedTasks: completedCount,
+        totalTasks: totalCount
+      });
+    }
+    
+    await routine.save();
+    res.json(routine);
+  } catch (error) {
+    console.error('Error updating task completion:', error);
+    res.status(500).json({ error: 'Failed to update task', details: error.message });
+  }
+});
+
+// Get completion statistics
+router.get('/stats', authenticateToken, async (req, res) => {
+  try {
+    const routines = await Routine.find({ userId: req.userId });
+    
+    const stats = {
+      totalRoutines: routines.length,
+      routinesWithTasks: routines.filter(r => r.tasks && r.tasks.length > 0).length,
+      totalTasks: routines.reduce((sum, r) => sum + (r.tasks?.length || 0), 0),
+      completedToday: 0,
+      completionRate: 0,
+      streak: 0,
+      history: []
+    };
+    
+    // Calculate today's completion
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    routines.forEach(routine => {
+      if (routine.tasks && routine.tasks.length > 0) {
+        const completedCount = routine.tasks.filter(t => t.completed).length;
+        stats.completedToday += completedCount;
+      }
+    });
+    
+    if (stats.totalTasks > 0) {
+      stats.completionRate = Math.round((stats.completedToday / stats.totalTasks) * 100);
+    }
+    
+    // Calculate streak (consecutive days with 100% completion)
+    const allHistory = [];
+    routines.forEach(routine => {
+      if (routine.completionHistory) {
+        routine.completionHistory.forEach(h => {
+          const dateStr = new Date(h.date).toDateString();
+          const existing = allHistory.find(ah => new Date(ah.date).toDateString() === dateStr);
+          if (existing) {
+            existing.completedTasks += h.completedTasks;
+            existing.totalTasks += h.totalTasks;
+          } else {
+            allHistory.push({ ...h });
+          }
+        });
+      }
+    });
+    
+    allHistory.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    let streak = 0;
+    for (const h of allHistory) {
+      if (h.completedTasks === h.totalTasks && h.totalTasks > 0) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+    stats.streak = streak;
+    stats.history = allHistory.slice(0, 30); // Last 30 days
+    
+    res.json(stats);
+  } catch (error) {
+    console.error('Error fetching routine stats:', error);
+    res.status(500).json({ error: 'Failed to fetch stats', details: error.message });
+  }
+});
+
+export default router;

@@ -1,0 +1,14 @@
+import type { CapacitorConfig } from '@capacitor/cli';
+
+const config: CapacitorConfig = {
+    appId: 'com.memoaid.app',
+    appName: 'MemoAid',
+    webDir: 'dist',
+    server: {
+        androidScheme: 'http',
+        cleartext: true,
+        allowNavigation: ['192.168.1.4:5000', '10.0.2.2:5000']
+    }
+};
+
+export default config;

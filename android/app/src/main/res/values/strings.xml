@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">MemoAid</string>
+    <string name="title_activity_main">MemoAid</string>
+    <string name="package_name">com.memoaid.app</string>
+    <string name="custom_url_scheme">com.memoaid.app</string>
+</resources>
