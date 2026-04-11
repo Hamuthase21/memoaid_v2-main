@@ -12,7 +12,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const API_BASE = 'http://192.168.1.4:5000/api'; // Updated for mobile access
+const API_BASE = 'http://localhost:5000/api'; // Updated for local development
 
 export const useAuth = () => {
   const context = useContext(AuthContext);

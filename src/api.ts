@@ -1,4 +1,4 @@
-const API_BASE = 'http://10.211.23.127:5000/api';  // Reverted to local IP for Web App support
+const API_BASE = 'http://10.117.106.127:5000/api';  // Local development server
 
 const getAuthToken = () => {
   return localStorage.getItem('authToken');

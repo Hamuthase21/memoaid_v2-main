@@ -5,7 +5,7 @@ interface Message {
   content: string;
 }
 
-const GEMINI_API_KEY = 'AIzaSyAMd5zyShNpDWRPclqLrUk4bzhYytGFZCY';
+const GEMINI_API_KEY = 'AIzaSyAvuUw2EQosik3yJR_wYEyOL0J2hLmWRuE';
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=' + GEMINI_API_KEY;
 
 
